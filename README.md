@@ -1,36 +1,439 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# US Market Intelligent Scanner
 
-## Getting Started
+리스크 필터링을 선행한 뒤, 9개의 투자 테마 엔진으로 미국 주식을 분류·탐색하는 **테마형 주식 분석 대시보드 프로토타입**입니다. 단순히 종목을 나열하는 화면이 아니라, 공통 리스크 가드 → 테마 선택 → 지표 요약 → 정렬 가능한 종목 테이블 → AI 해석 영역까지 하나의 제품 흐름으로 연결하는 것을 목표로 했습니다.
 
-First, run the development server:
+---
 
+## 1. 프로젝트 개요
+
+이 프로젝트는 미국 주식 데이터를 한 화면에서 직관적으로 탐색할 수 있도록 만든 대시보드입니다. 
+핵심 아이디어는 **모든 종목을 동일하게 보여주지 않고**, 먼저 리스크 필터를 적용한 뒤 투자 관점별 테마 엔진으로 종목군을 나누는 것입니다.
+
+예를 들어,
+- 저평가 성장주
+- 성장 기대주
+- 안전 성장주
+- 저렴한 평가주
+- 고수익 저평가
+- 저평가 탈출
+- 부가티주
+- 배당주
+- 미래왕 배당주
+
+같은 식으로 투자자의 관점에 따라 종목을 다르게 해석할 수 있도록 설계했습니다.
+
+이 프로토타입은 **프론트엔드 상호작용과 정보 구조 설계에 초점**을 맞춘 버전이며, 실제 서비스에서는 FastAPI 기반 백엔드와 데이터 수집/가공 파이프라인을 연결하는 방향을 상정하고 있습니다.
+
+---
+
+## 2. 프로젝트 목적
+
+### 2-1. 왜 만들었는가
+
+기존의 주식 스크리너는 필터는 강력하지만,
+- 초보자에게는 해석이 어렵고,
+- 투자 아이디어 단위로 보기 힘들며,
+- 데이터를 "보여주는 것"과 "의미를 설명하는 것" 사이가 분리되어 있는 경우가 많습니다.
+
+이 프로젝트는 이런 문제를 해결하기 위해 다음을 목표로 했습니다.
+
+1. **리스크가 큰 종목을 먼저 걸러내기**
+2. **투자 아이디어 단위(테마)로 종목을 묶기**
+3. **숫자 테이블 + 해석 영역을 함께 제공하기**
+4. **실제 API와 쉽게 연결 가능한 대시보드 구조 만들기**
+
+### 2-2. 무엇을 보여주고 싶은가
+
+이 프로젝트는 단순 UI 결과물이 아니라 다음 역량을 함께 보여주기 위한 포트폴리오 성격을 가집니다.
+
+- 데이터 정제 및 지표 구조화 능력
+- 투자 로직을 화면 흐름으로 번역하는 제품 설계 능력
+- 정렬 가능한 데이터 테이블과 대시보드 UX 구성 능력
+- 추후 백엔드/API 연결을 고려한 프론트 구조화 능력
+
+---
+
+## 3. 기술 스택
+
+### Frontend
+- **Next.js**
+- **React**
+- **Tailwind CSS**
+- **Framer Motion**
+- **Lucide React**
+
+### UI / Component Layer
+- 원본 프로토타입은 `@/components/ui/*` 경로의 **shadcn/ui 스타일 컴포넌트(Card, Badge, Button, Table)** 구조를 사용하도록 설계했습니다.
+- StackBlitz 실행용 정리본에서는 의존성을 줄이기 위해 일부 UI를 순수 JSX + Tailwind 기반으로 단순화해 실행했습니다.
+
+### Data / Backend 
+- **FastAPI**
+- **yfinance + Pandas**
+- **PostgreSQL**
+- **APScheduler**
+
+### Deployment 
+- **Vercel**
+- **Render / AWS**
+
+---
+
+## 4. 핵심 기능
+
+### 4-1. 공통 리스크 필터 (Risk Guard)
+모든 테마 분석 전에 공통적으로 적용되는 기본 가드입니다.
+
+- Price ≥ $1.00
+- Market Cap ≥ $50M
+- `.Q`, `.E` 등 위험 티커 제외
+- 장 마감 후 일일 배치 갱신 가정
+
+이 구조를 둔 이유는, 이후 테마별 점수나 추천보다 **상장 유지 가능성·유동성·최소 규모** 같은 기본 조건을 먼저 통과시켜야 화면 전체의 신뢰도가 높아지기 때문입니다.
+
+### 4-2. 9개 투자 테마 엔진
+사용자는 좌측 사이드 패널에서 원하는 투자 테마를 선택할 수 있습니다.
+
+예시:
+- 저평가 성장주: PEG < 1.0 & 매출성장 > 15%
+- 성장 기대주: 3분기 연속 영업이익 가속
+- 안전 성장주: 5년 연속 이익성장 & 부채비율 < 50%
+- 고수익 저평가: ROE > 15% & PER < 15
+- 배당주: 배당수익률 > 4% & 안정 현금흐름
+
+이 테마 구조 덕분에 사용자는 숫자를 직접 모두 해석하지 않더라도, **어떤 투자 논리로 선별된 종목인지 먼저 이해한 뒤** 데이터를 볼 수 있습니다.
+
+### 4-3. 상단 마켓 오버뷰
+대시보드 상단에는 다음과 같은 지표 위젯을 배치했습니다.
+
+- S&P 500
+- NASDAQ
+- DOW
+- VIX
+- USD/KRW
+- 10Y Treasury
+
+이 영역은 종목 탐색 전에 시장 분위기와 거시 지표를 빠르게 파악하는 역할을 합니다.
+
+### 4-4. 테마 요약 카드
+선택한 테마에 따라 다음 지표를 요약해서 보여줍니다.
+
+- 검출 종목 수
+- 평균 AI 점수
+- 평균 PER
+- 평균 ROE
+
+즉, 테이블에 들어가기 전에 해당 테마가 전반적으로 어떤 성격인지 한 번 더 압축해서 보여주는 영역입니다.
+
+### 4-5. 정렬 가능한 종목 테이블
+핵심 데이터 테이블에서는 다음 값을 기준으로 정렬할 수 있습니다.
+
+- 현재가
+- 등락률
+- PER
+- ROE
+- 매출성장
+- AI 점수
+
+단순 테이블 나열이 아니라, 사용자가 바로 비교와 우선순위 판단을 할 수 있도록 설계했습니다.
+
+### 4-6. AI 테마 분석 영역
+테마마다 다음 세 가지 관점으로 해석 문장을 보여주도록 구성했습니다.
+
+- 테마 요약
+- Top Pick
+- 리스크 평가
+
+이 영역은 실제 서비스에서
+- FastAPI 응답,
+- LLM 요약 결과,
+- 내부 분석 엔진의 설명 텍스트
+
+중 하나로 대체할 수 있도록 설계했습니다.
+
+### 4-7. 개발 로드맵 섹션
+프로토타입 하단에는 이 프로젝트가 어떤 순서로 발전할지를 보여주는 로드맵을 넣었습니다.
+
+1. 데이터 파이프라인 구축
+2. 테마 분석 엔진 개발
+3. 백엔드 API 설계
+4. 프론트엔드 대시보드 구현
+5. 최적화 및 배포
+
+이 섹션은 단순 장식이 아니라, 포트폴리오 관점에서 **이 프로젝트를 실제 서비스로 확장할 수 있는 설계형 프로젝트**로 보이게 만드는 장치입니다.
+
+---
+
+## 5. 설치 및 실행 방법
+
+### 5-1. 사전 준비
+- Node.js 18 이상 권장
+- npm 또는 pnpm
+
+### 5-2. Next.js 프로젝트 생성
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun run dev
+npx create-next-app@latest us-market-intelligent-scanner
+cd us-market-intelligent-scanner
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 5-3. 필수 패키지 설치
+StackBlitz/로컬에서 실행용 정리본 기준:
+```bash
+npm install framer-motion lucide-react
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 5-4. 파일 배치
+- 정리한 대시보드 코드를 `app/page.jsx` 또는 `app/page.tsx`에 넣습니다.
+- 원본 소스를 그대로 사용한다면 `@/components/ui/*` 의존성 때문에 shadcn/ui 관련 설정이 추가로 필요합니다.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### 5-5. 개발 서버 실행
+```bash
+npm run dev
+```
 
-## Learn More
+실행 후 브라우저에서 아래 주소로 접속합니다.
+```bash
+http://localhost:3000
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 6. 원본 소스 기준 추가 설정
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+원본 프로토타입은 아래 import 구조를 사용합니다.
 
-## Deploy on Vercel
+```tsx
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+따라서 원본을 그대로 실행하려면 보통 다음과 같은 흐름이 필요합니다.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+1. Tailwind 설정
+2. alias(`@/...`) 설정
+3. shadcn/ui 초기화
+4. `card`, `badge`, `button`, `table` 컴포넌트 추가
+
+예시:
+```bash
+npm install framer-motion lucide-react
+npx shadcn@latest init
+npx shadcn@latest add card badge button table
+```
+
+---
+
+## 7. 스크린샷
+
+> 아래 이미지는 이 리포지토리의 `readme_assets/screenshots/` 폴더를 기준으로 연결했습니다.
+
+### 7-1. 메인 대시보드
+![메인 대시보드](./readme_assets/screenshots/dashboard-overview.png)
+
+- 상단 브랜딩
+- 마켓 티커
+- Risk Guard
+- 선택된 테마 요약 카드
+
+### 7-2. 테마 스캐너 화면
+![테마 스캐너](./readme_assets/screenshots/theme-scanner.png)
+
+- 좌측 테마 엔진 목록
+- 선택된 테마의 KPI 요약
+- 정렬 가능한 종목 스캐너
+
+### 7-3. AI 분석 패널
+![AI 분석 패널](./readme_assets/screenshots/ai-analysis.png)
+
+- 테마 요약
+- Top Pick
+- 리스크 평가
+
+### 7-4. 종목 테이블 상세
+![종목 테이블](./readme_assets/screenshots/stock-table.png)
+
+- 현재가 / 등락률 / 시총 / PER / ROE / 매출성장 / AI 점수
+- 정렬 가능한 비교형 테이블
+
+### 7-5. 선택 테마 상세
+![선택 테마 상세](./readme_assets/screenshots/theme-detail.png)
+
+- 선택한 테마 기준 필터
+- 평균 지표 카드
+- 세부 테이블과 분석 연결 흐름
+
+---
+
+## 8. 프로젝트 구조 예시
+
+```bash
+us-market-intelligent-scanner/
+├─ app/
+│  └─ page.jsx
+├─ public/
+├─ readme_assets/
+│  └─ screenshots/
+│     ├─ dashboard-overview.png
+│     ├─ theme-scanner.png
+│     ├─ ai-analysis.png
+│     ├─ stock-table.png
+│     └─ theme-detail.png
+├─ package.json
+└─ README.md
+```
+
+---
+
+## 9. 개발 과정에서 겪은 이슈와 해결 과정
+
+이 프로젝트를 정리하면서 단순히 화면을 만드는 것보다, **실행 가능한 구조로 정돈하는 과정**에서 중요한 이슈가 몇 가지 있었습니다.
+
+### 이슈 1. `.jsx` 확장자인데 내부에 TypeScript 문법이 섞여 있던 문제
+초기 파일은 `.jsx` 확장자를 사용하고 있었지만, 내부에는 아래처럼 TypeScript 문법이 포함되어 있었습니다.
+
+- `type SortKey = ...`
+- `useState<...>()`
+- 함수 인자 타입 선언
+
+이 상태로는 환경에 따라 파싱 에러가 발생할 수 있습니다.
+
+#### 해결
+- 방법 A: 파일을 `.tsx`로 바꾸고 TypeScript 환경에서 실행
+- 방법 B: StackBlitz 실행용으로 타입 선언을 제거하고 순수 JSX 버전으로 정리
+
+이번 실행 버전에서는 **빠른 실행성**을 위해 JSX 정리본으로 변환했습니다.
+
+### 이슈 2. `@/components/ui/*` 의존성 때문에 바로 실행되지 않던 문제
+원본은 shadcn/ui 스타일의 컴포넌트 구조를 전제로 작성되어 있어서, 아무 Next.js 프로젝트에 붙여 넣으면 곧바로 동작하지 않습니다.
+
+문제가 되는 지점:
+- `@/components/ui/card`
+- `@/components/ui/badge`
+- `@/components/ui/button`
+- `@/components/ui/table`
+
+#### 해결
+- alias와 shadcn/ui가 이미 설정된 프로젝트라면 원본 구조 유지
+- 빠른 시연 목적이라면 Card, Badge, Button, Table을 순수 JSX + Tailwind로 치환
+
+즉, **재사용성 높은 원본 구조**와 **즉시 실행 가능한 데모 구조**를 분리해 생각해야 했습니다.
+
+### 이슈 3. 대시보드의 가로 폭이 넓어 모바일/소형 화면에서 넘치던 문제
+상단 마켓 티커와 종목 테이블은 열이 많기 때문에, 작은 화면에서는 가로 스크롤이 발생할 수밖에 없었습니다.
+
+#### 해결
+- 상단 마켓 티커는 `overflow-x-auto` 구조로 처리
+- 종목 테이블도 가로 스크롤을 허용하는 방식으로 설계
+- 핵심 KPI 카드는 그리드로 먼저 요약해 작은 화면에서도 주요 정보가 보이도록 구성
+
+이렇게 해서 **정보량은 유지하되, 화면이 깨지지 않는 방식**으로 정리했습니다.
+
+### 이슈 4. 정렬 기준에 `null` 값이 포함되는 문제
+PER, ROE 같은 값은 일부 종목에서 `null`이 될 수 있습니다. 이 경우 단순 정렬을 적용하면 비교 오류가 나거나 예상과 다르게 동작할 수 있습니다.
+
+#### 해결
+정렬 로직에서 `null` 값을 바로 비교하지 않고,
+- 오름차순에서는 `+Infinity`
+- 내림차순에서는 `-Infinity`
+
+로 치환해 정렬 흐름을 유지했습니다.
+
+이 처리를 통해 **데이터가 비어 있는 종목도 UI를 깨지 않으면서 안정적으로 정렬**할 수 있게 했습니다.
+
+### 이슈 5. 분석 텍스트를 어디까지 하드코딩하고 어디서부터 API로 뺄 것인지의 문제
+AI 분석 패널은 UI상 매우 중요하지만, 초기 프로토타입 단계에서 백엔드와 LLM까지 모두 붙이면 개발 복잡도가 급격히 올라갑니다.
+
+#### 해결
+우선은 프론트에서
+- `summary`
+- `topPick`
+- `risk`
+
+형태로 해석 문구를 생성하고, 이후에는 해당 영역만 API 응답으로 바꿀 수 있게 설계했습니다.
+
+즉, **처음부터 완전한 시스템을 만들기보다, 교체 가능한 인터페이스를 먼저 정의한 것**이 핵심입니다.
+
+### 이슈 6. "데이터 프로젝트"와 "제품형 UI 프로젝트" 사이의 균형 문제
+이 프로젝트는 단순 데이터 분석 결과만 보여줘도 되고, 반대로 UI만 예쁘게 만들어도 됩니다. 하지만 포트폴리오에서는 둘 중 하나만 강조하면 설득력이 떨어질 수 있습니다.
+
+#### 해결
+그래서 README와 화면 구조 모두에서 아래 세 가지를 함께 보여주도록 설계했습니다.
+
+- 데이터 엔지니어링 관점
+- 투자 도메인 지식 관점
+- 풀스택/제품화 관점
+
+이 균형 덕분에 이 프로젝트는 단순 시각화가 아니라, **데이터를 제품 수준의 경험으로 번역한 사례**로 설명할 수 있게 되었습니다.
+
+---
+
+## 10. 앞으로의 개선 방향
+
+### 10-1. 실제 데이터 연동
+현재는 샘플 데이터 기반 프로토타입이므로, 실제 서비스 단계에서는
+- yfinance 수집
+- Pandas 가공
+- PostgreSQL 저장
+- FastAPI 제공
+
+흐름으로 고도화할 수 있습니다.
+
+### 10-2. 차트 드릴다운
+현재 테이블 중심 구조이므로,
+- 캔들 차트
+- 이동평균선
+- 거래량
+- 실적 발표 캘린더
+
+같은 상세 시각화를 추가하면 분석 툴로서의 완성도가 높아집니다.
+
+### 10-3. 사용자 필터 커스터마이징
+현재는 정의된 9개 테마 중심이지만,
+- 사용자 정의 필터 저장
+- 관심 종목 즐겨찾기
+- 조건 비교 저장
+
+기능을 추가하면 실제 사용성이 더 높아질 수 있습니다.
+
+### 10-4. LLM 요약 정교화
+현재 해석 문구는 구조화된 프로토타입 수준이므로,
+- 실적 요약
+- 업종 뉴스 반영
+- 리스크 코멘트 자동 생성
+
+등으로 확장하면 차별화된 사용자 경험을 만들 수 있습니다.
+
+---
+
+## 11. 느낀 점
+
+이 프로젝트에서 가장 중요했던 점은 단순히 "예쁜 대시보드"를 만드는 것이 아니라,
+**투자 기준을 구조화된 제품 흐름으로 바꾸는 과정**이었습니다.
+
+즉,
+- 데이터는 어떻게 선별할 것인지,
+- 어떤 기준을 먼저 보여줄 것인지,
+- 숫자를 어떻게 해석 가능한 화면으로 바꿀 것인지,
+- 나중에 API와 연결하기 쉽게 어떻게 설계할 것인지
+
+를 함께 고민한 프로젝트였습니다.
+
+포트폴리오 관점에서도 이 프로젝트는
+**데이터 분석 + 프론트엔드 UI + 제품 설계 사고를 한 번에 보여줄 수 있는 작업**이라는 점에서 의미가 있습니다.
+
+---
+
+## 12. 실행용 메모
+
+- 빠르게 실행하려면: `app/page.jsx` + `framer-motion` + `lucide-react`
+- 원본 구조를 유지하려면: shadcn/ui, alias, Tailwind 환경 필요
+- 실제 서비스로 확장하려면: FastAPI + yfinance + PostgreSQL + 배치 스케줄러 연결
+

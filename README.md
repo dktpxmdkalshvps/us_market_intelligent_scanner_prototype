@@ -236,7 +236,8 @@ npx shadcn@latest add card badge button table
 > 아래 이미지는 이 리포지토리의 `readme_assets/screenshots/` 폴더를 기준으로 연결했습니다.
 
 ### 7-1. 메인 대시보드
-![메인 대시보드](./readme_assets/screenshots/dashboard-overview.png)
+<img width="1890" height="852" alt="스크린샷 2026-04-03 084347" src="https://github.com/user-attachments/assets/a0194925-201b-485f-bb4f-3a007e9aeb36" />
+
 
 - 상단 브랜딩
 - 마켓 티커
@@ -244,27 +245,29 @@ npx shadcn@latest add card badge button table
 - 선택된 테마 요약 카드
 
 ### 7-2. 테마 스캐너 화면
-![테마 스캐너](./readme_assets/screenshots/theme-scanner.png)
+<img width="1319" height="668" alt="스크린샷 2026-04-03 084546" src="https://github.com/user-attachments/assets/e27546bf-5299-412d-8822-a1e7093c76f8" />
+
 
 - 좌측 테마 엔진 목록
 - 선택된 테마의 KPI 요약
 - 정렬 가능한 종목 스캐너
 
 ### 7-3. AI 분석 패널
-![AI 분석 패널](./readme_assets/screenshots/ai-analysis.png)
+<img width="1314" height="659" alt="스크린샷 2026-04-03 084502" src="https://github.com/user-attachments/assets/e16f8c17-e485-4732-98ea-ac38674bce8c" />
+
 
 - 테마 요약
 - Top Pick
 - 리스크 평가
 
 ### 7-4. 종목 테이블 상세
-![종목 테이블](./readme_assets/screenshots/stock-table.png)
+<img width="1377" height="546" alt="스크린샷 2026-04-03 084536" src="https://github.com/user-attachments/assets/192f74dd-78ca-4968-b0cd-a172dd050750" />
 
 - 현재가 / 등락률 / 시총 / PER / ROE / 매출성장 / AI 점수
 - 정렬 가능한 비교형 테이블
 
 ### 7-5. 선택 테마 상세
-![선택 테마 상세](./readme_assets/screenshots/theme-detail.png)
+<img width="1908" height="867" alt="스크린샷 2026-04-03 084406" src="https://github.com/user-attachments/assets/55c02110-ab82-46e6-974b-15d01b28c567" />
 
 - 선택한 테마 기준 필터
 - 평균 지표 카드

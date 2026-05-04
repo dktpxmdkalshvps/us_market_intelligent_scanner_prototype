@@ -9,22 +9,30 @@ import logging
 from .routers import themes, stocks, market
 from .core.config import settings
 from .core.cache import cache
+from .core.db import init_db
 from .services.scheduler import start_scheduler, shutdown_scheduler
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Start/stop background scheduler on app lifecycle."""
-    logger.info("Starting QuantScreen backend...")
+    logger.info("QuantScreen 백엔드 시작 중...")
+
+    # DB 테이블 자동 생성 (SQLite면 파일도 함께 생성)
+    init_db()
+    logger.info("DB 초기화 완료")
+
     await cache.connect()
     start_scheduler()
     yield
     shutdown_scheduler()
     await cache.disconnect()
-    logger.info("QuantScreen backend stopped.")
+    logger.info("QuantScreen 백엔드 종료")
 
 
 app = FastAPI(
@@ -44,7 +52,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Router Registration ──────────────────────────────────────────────────────
 app.include_router(themes.router, prefix="/api/theme", tags=["Themes"])
 app.include_router(stocks.router, prefix="/api/stocks", tags=["Stocks"])
 app.include_router(market.router, prefix="/api/market", tags=["Market"])
@@ -52,4 +59,4 @@ app.include_router(market.router, prefix="/api/market", tags=["Market"])
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "version": "1.0.0"}
+    return {"status": "ok", "version": "1.0.0", "db": settings.DATABASE_URL.split("://")[0]}

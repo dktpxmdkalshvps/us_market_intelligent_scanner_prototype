@@ -2,7 +2,13 @@
 Themes Router – /api/theme/{theme_key}
 """
 import logging
+<<<<<<< HEAD
 from datetime import datetime
+=======
+import math
+from datetime import datetime
+from typing import Optional
+>>>>>>> 7de507c (edit)
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 
@@ -11,7 +17,11 @@ from ..core.config import settings
 from ..services.fetcher import get_full_universe, bulk_fetch_universe
 from ..services.filters import filter_universe
 from ..services.theme_engines import run_theme, THEME_ENGINES
+<<<<<<< HEAD
 from ..models.schemas import ThemeResponseSchema, ApiResponseSchema
+=======
+from ..models.schemas import StockSchema, ThemeResponseSchema, ApiResponseSchema
+>>>>>>> 7de507c (edit)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -19,6 +29,53 @@ logger = logging.getLogger(__name__)
 VALID_THEMES = set(THEME_ENGINES.keys())
 
 
+<<<<<<< HEAD
+=======
+def _nan_to_none(val):
+    """Convert NaN/inf floats to None for JSON-safe serialization."""
+    if val is None:
+        return None
+    try:
+        if math.isnan(val) or math.isinf(val):
+            return None
+    except (TypeError, ValueError):
+        pass
+    return val
+
+
+def _map_to_stock_schema(d: dict) -> StockSchema:
+    """Map a raw fetcher dict (snake_case) to StockSchema (camelCase)."""
+    return StockSchema(
+        ticker=d.get("ticker", ""),
+        name=d.get("name", ""),
+        sector=d.get("sector", "") or "",
+        industry=d.get("industry", "") or "",
+        price=float(d.get("price", 0) or 0),
+        change=float(d.get("change", 0) or 0),
+        changePercent=float(d.get("change_percent", 0) or 0),
+        marketCap=float(d.get("market_cap", 0) or 0),
+        volume=int(d.get("volume", 0) or 0),
+        per=_nan_to_none(d.get("per")),
+        peg=_nan_to_none(d.get("peg")),
+        pbr=_nan_to_none(d.get("pbr")),
+        roe=_nan_to_none(d.get("roe")),
+        revenueGrowth=_nan_to_none(d.get("revenue_growth")),
+        operatingMargin=_nan_to_none(d.get("operating_margin")),
+        debtToEquity=_nan_to_none(d.get("debt_to_equity")),
+        dividendYield=_nan_to_none(d.get("dividend_yield")),
+        eps=_nan_to_none(d.get("eps")),
+        ma50=_nan_to_none(d.get("ma50")),
+        ma200=_nan_to_none(d.get("ma200")),
+        isAboveMa200=bool(d.get("is_above_ma200", False)),
+        isPennyStock=bool(d.get("is_penny_stock", False)),
+        isBankruptcyRisk=bool(d.get("is_bankruptcy_risk", False)),
+        isSmallCap=bool(d.get("is_small_cap", False)),
+        riskScore=int(d.get("risk_score", 0) or 0),
+        themeScore=int(d.get("themeScore", 0) or 0),
+    )
+
+
+>>>>>>> 7de507c (edit)
 @router.get("/{theme_key}", response_model=ApiResponseSchema)
 async def get_theme_stocks(
     theme_key: str,
@@ -50,10 +107,19 @@ async def get_theme_stocks(
         filtered, original_count = filter_universe(raw_stocks)
         themed = run_theme(theme_key, filtered)
 
+<<<<<<< HEAD
         payload = ThemeResponseSchema(
             theme=theme_key,
             stocks=themed,
             totalCount=len(themed),
+=======
+        stock_schemas = [_map_to_stock_schema(s) for s in themed]
+
+        payload = ThemeResponseSchema(
+            theme=theme_key,
+            stocks=stock_schemas,
+            totalCount=len(stock_schemas),
+>>>>>>> 7de507c (edit)
             filteredCount=original_count,
             lastUpdated=datetime.utcnow().isoformat(),
         )

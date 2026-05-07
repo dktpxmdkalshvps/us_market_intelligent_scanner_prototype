@@ -1,206 +1,236 @@
-<<<<<<< HEAD
-# QuantScreen 📈
-=======
 # QuantScreen
->>>>>>> 7de507c (edit)
-### 리스크 필터링 기반 테마별 미국 주식 분석 대시보드
 
-> 퀀트 지표(PER, PEG, ROE 등)를 기준으로 엄선된 **9가지 투자 테마**를 제공하고
-> 상장폐지 위험 종목을 자동 필터링하여 안전한 투자 정보를 전달합니다.
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js" />
+  <img src="https://img.shields.io/badge/FastAPI-0.111-009688?style=flat-square&logo=fastapi" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript" />
+  <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python" />
+  <img src="https://img.shields.io/badge/PostgreSQL-SQLAlchemy-4169E1?style=flat-square&logo=postgresql" />
+  <img src="https://img.shields.io/badge/Deploy-Vercel-000000?style=flat-square&logo=vercel" />
+</p>
+
+<p align="center">
+  퀀트 지표 기반 리스크 필터링 미국 주식 분석 대시보드<br/>
+  <strong>Bloomberg Terminal 스타일 UI · 9대 투자 테마 · 자동 리스크 스크리닝</strong>
+</p>
 
 ---
 
-<<<<<<< HEAD
-## 🏗 프로젝트 구조
-=======
-## 프로젝트 구조
->>>>>>> 7de507c (edit)
+## 프로젝트 소개
+
+개인 투자자가 수백 개의 미국 상장 종목 중에서 **재무 지표가 검증된 종목만 빠르게 추려내기 어렵다**는 문제에서 출발했습니다.
+
+QuantScreen은 PER, PEG, ROE, 배당수익률 등 퀀트 지표를 조합한 **9가지 투자 테마 알고리즘**을 제공하고, 상장폐지·파산 위험 종목을 데이터 수집 단계에서 사전 차단합니다. Bloomberg Terminal에서 영감을 받은 다크 테마 UI로 전문적인 투자 분석 경험을 제공합니다.
+
+---
+
+## 스크린샷
+
+<img width="400" height="213" alt="1000109132" src="https://github.com/user-attachments/assets/43039f18-788f-4fd2-91d6-1349a8f3ed3e" />
+
+**전체 대시보드**
+<img width="1596" height="766" alt="image" src="https://github.com/user-attachments/assets/f422d7ce-c54c-4bbc-9aaf-f2c8ce05b9fa" />
+
+**시장 지수 & 실시간 티커**
+<img width="1596" height="766" alt="image" src="https://github.com/user-attachments/assets/69dce846-52f8-45b7-b817-43a48872d472" />
+
+**증시 캘린더**
+<img width="410" height="858" alt="스크린샷 2026-05-04 232826" src="https://github.com/user-attachments/assets/f63812ee-94e4-4e2a-b34b-4cc0a70eb10b" /> <img width="403" height="770" alt="스크린샷 2026-05-04 232835" src="https://github.com/user-attachments/assets/287e13a1-d69c-404c-a4bb-56c7ee47d3af" />
+
+---
+
+## 핵심 기능
+
+**퀀트 스크리닝 엔진**
+- 9가지 독립적인 투자 테마 알고리즘 (Pandas 기반)
+- 테마별 복합 조건 필터링: PEG, ROE, PBR, 이동평균 교차, 배당 이력 등
+- 공통 리스크 가드로 패니 스톡·소형주·파산위험 종목 사전 제거
+
+**실시간 시장 정보**
+- 주요 지수(S&P 500, NASDAQ, Dow) 및 환율 실시간 티커 배너
+- 증시 캘린더: 실적 발표 및 경제 지표 일정 통합 표시
+
+**성능 최적화**
+- Redis 캐시 레이어로 반복 API 호출 비용 절감 (In-memory fallback 지원)
+- APScheduler로 장 마감 후 배치 데이터 갱신 자동화
+- TanStack Query 클라이언트 캐싱으로 불필요한 네트워크 요청 제거
+
+**UI/UX**
+- Bloomberg Terminal 스타일 다크 테마
+- Framer Motion 기반 전환 애니메이션
+- 로딩 Skeleton UI, 정렬·검색·페이지네이션이 통합된 종목 테이블
+- 종목 클릭 시 가격 차트와 재무 지표를 한 화면에서 확인하는 상세 모달
+
+---
+
+## 아키텍처
 
 ```
-stock-dashboard/
-├── app/                        # Next.js App Router (프론트엔드)
-│   ├── layout.tsx              # 루트 레이아웃
-│   ├── page.tsx                # 메인 대시보드 페이지
-│   └── globals.css             # 전역 스타일 (Bloomberg Terminal 다크 테마)
+┌─────────────────────────────────────────────────────┐
+│                    Client (Browser)                  │
+│         Next.js 14 · Zustand · TanStack Query        │
+└───────────────────────┬─────────────────────────────┘
+                        │ HTTP (REST)
+┌───────────────────────▼─────────────────────────────┐
+│               FastAPI Backend (Python)               │
+│                                                      │
+│  Routers ──► Services ──► yfinance / PostgreSQL      │
+│                │                                     │
+│            Redis Cache (TTL 기반)                    │
+│                │                                     │
+│         APScheduler (배치 갱신)                      │
+└─────────────────────────────────────────────────────┘
+                        │
+              Vercel Serverless (배포)
+```
+
+**데이터 흐름**
+
+1. APScheduler가 장 마감 후 yfinance에서 종목 데이터를 수집해 PostgreSQL에 적재
+2. API 요청 시 Redis 캐시를 먼저 확인 → 미스 시 DB 쿼리 후 캐시 갱신
+3. 프론트엔드는 TanStack Query로 응답을 클라이언트 캐시에 보관해 재요청 최소화
+
+---
+
+## 투자 테마 알고리즘
+
+| # | 테마 | 핵심 조건 | 전략 근거 |
+|---|------|-----------|-----------|
+| 1 | 저평가 성장주 | `PEG < 1.0` & 매출성장률 > 15% | 성장 대비 저평가 종목 포착 |
+| 2 | 성장 기대주 | 매출성장률 > 10% & 영업이익률 > 5% | 수익성 있는 성장 기업 선별 |
+| 3 | 안전 성장주 | 매출성장 & 부채비율 < 50% | 재무 안전성과 성장을 동시에 |
+| 4 | 저렴한 평가주 | `PBR < 1.0` | 자산 대비 저평가 기업 |
+| 5 | 고수익 저평가 | `ROE > 15%` & `PER < 15` | 수익성 높고 가격 저렴한 기업 |
+| 6 | 저평가 탈출 | MA50 > MA200 & 주가 > MA200 | 기술적 정배열 전환 시점 포착 |
+| 7 | 고마진주 | 영업이익률 > 30% | 높은 가격 결정력을 가진 기업 |
+| 8 | 배당주 | 배당수익률 > 4% | 안정적인 현금흐름 확보 |
+| 9 | 배당귀족 | 10년 이상 연속 증배 | 장기 배당 성장 신뢰도 검증 |
+
+---
+
+## 리스크 가드
+
+9개 테마 알고리즘 실행 전 공통으로 적용되는 전처리 필터입니다.
+
+| 필터 | 기준 | 목적 |
+|------|------|------|
+| Penny Stock 제거 | 주가 $1.00 미만 | 유동성 위험 차단 |
+| 소형주 제거 | 시가총액 $50M 미만 | 상장폐지 위험 차단 |
+| 파산위험 제거 | `.Q`, `.E`, `.PK` 접미사 | 공시 지연 / 파산 징후 제거 |
+| 데이터 없음 제거 | 가격 정보 부재 | 거래 정지 종목 제거 |
+
+---
+
+## 기술 스택
+
+| 구분 | 기술 | 선택 이유 |
+|------|------|-----------|
+| Frontend | Next.js 14 (App Router), TypeScript | SSR + 파일 기반 라우팅으로 초기 로딩 최적화 |
+| Styling | Tailwind CSS, Framer Motion | 유틸리티 클래스로 빠른 UI 구성, 애니메이션 선언적 관리 |
+| State | Zustand, TanStack Query | 전역 UI 상태와 서버 상태를 분리해 관심사 분리 |
+| Charts | Recharts | React 친화적 선언형 차트 컴포넌트 |
+| Backend | FastAPI (Python 3.11+) | 비동기 처리 + 자동 Swagger 문서 생성 |
+| Data | yfinance, Pandas, NumPy | 재무 데이터 수집 및 복합 지표 연산 |
+| Database | PostgreSQL + SQLAlchemy | 정형 재무 데이터의 안정적인 영속성 보장 |
+| Cache | Redis / In-memory fallback | API 응답 TTL 캐싱으로 외부 호출 비용 절감 |
+| Scheduler | APScheduler | 장 마감 후 데이터 갱신 자동화 |
+| Deploy | Vercel | Next.js + Python Serverless 단일 플랫폼 배포 |
+
+---
+
+## 프로젝트 구조
+
+```
+quantscreen/
+├── app/                        # Next.js App Router
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── globals.css             # Bloomberg Terminal 다크 테마
 │
-├── components/                 # React 컴포넌트
-│   ├── MarketBanner.tsx        # 상단 실시간 시세 티커
+├── components/
+│   ├── MarketBanner.tsx        # 실시간 시세 티커
 │   ├── MarketOverview.tsx      # 주요 지수 카드
-│   ├── ThemeSelector.tsx       # 9대 테마 선택 탭
-│   ├── StockTable.tsx          # 종목 테이블 (정렬/검색/페이지네이션)
+│   ├── ThemeSelector.tsx       # 9대 테마 탭
+│   ├── StockTable.tsx          # 종목 테이블 (정렬 / 검색 / 페이지네이션)
 │   ├── StockDetailModal.tsx    # 종목 상세 모달 (차트 포함)
-│   ├── MarketCalendar.tsx      # 증시 캘린더 (실적발표/경제지표)
-│   ├── Providers.tsx           # React Query Provider
-│   └── ui/
-│       └── Skeleton.tsx        # 로딩 스켈레톤 UI
+│   ├── MarketCalendar.tsx      # 증시 캘린더
+│   ├── Providers.tsx
+│   └── ui/Skeleton.tsx
 │
-├── lib/                        # 프론트엔드 유틸리티
-│   ├── api.ts                  # Axios API 클라이언트
-│   ├── types.ts                # TypeScript 타입 정의
-│   ├── themes.ts               # 9대 테마 메타데이터
+├── lib/
+│   ├── api.ts                  # Axios 클라이언트
+│   ├── types.ts                # TypeScript 타입
+│   ├── themes.ts               # 테마 메타데이터
 │   └── store.ts                # Zustand 전역 상태
 │
 ├── backend/                    # FastAPI 백엔드
-│   ├── main.py                 # FastAPI 앱 진입점
+│   ├── main.py
 │   ├── core/
-│   │   ├── config.py           # 환경변수 설정 (pydantic-settings)
-│   │   └── cache.py            # Redis / In-memory 캐시 레이어
+│   │   ├── config.py           # 환경변수 (pydantic-settings)
+│   │   └── cache.py            # Redis / In-memory 캐시
 │   ├── routers/
 │   │   ├── themes.py           # GET /api/theme/{theme_key}
 │   │   ├── stocks.py           # GET /api/stocks/{ticker}
 │   │   └── market.py           # GET /api/market/banner|calendar
 │   ├── services/
-│   │   ├── fetcher.py          # yfinance 데이터 수집 모듈
-│   │   ├── filters.py          # 리스크 가드 (Base Filter)
-│   │   ├── theme_engines.py    # 9대 테마 퀀트 알고리즘 (Pandas)
+│   │   ├── fetcher.py          # yfinance 데이터 수집
+│   │   ├── filters.py          # 리스크 가드
+│   │   ├── theme_engines.py    # 9대 테마 퀀트 알고리즘
 │   │   ├── market_service.py   # 실시간 시세 / 캘린더
 │   │   └── scheduler.py        # APScheduler 배치 스케줄러
 │   └── models/
-│       ├── stock.py            # SQLAlchemy ORM 모델
+│       ├── stock.py            # SQLAlchemy ORM
 │       └── schemas.py          # Pydantic 응답 스키마
 │
 ├── api/
-│   ├── index.py                # Vercel Python Serverless 진입점
-│   └── requirements.txt        # Python 패키지 목록
+│   ├── index.py                # Vercel Serverless 진입점
+│   └── requirements.txt
 │
-├── scripts/
-│   ├── dev.sh                  # 로컬 개발 환경 시작 스크립트
-│   ├── init_db.py              # DB 테이블 초기화
-│   └── refresh_data.py         # 수동 데이터 갱신 트리거
-│
-├── vercel.json                 # Vercel 배포 설정
-├── next.config.mjs             # Next.js 설정
-├── tailwind.config.ts          # Tailwind CSS 설정
-├── .env.example                # 환경변수 템플릿
-└── README.md
+└── scripts/
+    ├── dev.sh                  # 로컬 개발 환경 시작
+    ├── init_db.py              # DB 초기화
+    └── refresh_data.py         # 수동 데이터 갱신
 ```
 
 ---
 
-<<<<<<< HEAD
-## 🛡 리스크 가드 (공통 필터)
-=======
-## 리스크 가드 (공통 필터)
->>>>>>> 7de507c (edit)
-
-모든 테마 추출 전 자동 적용:
-
-| 필터 | 기준 | 이유 |
-|------|------|------|
-| Penny Stock 제외 | 주가 $1.00 미만 | 유동성 위험 |
-| 소형주 제외 | 시가총액 $50M 미만 | 상장폐지 위험 |
-| 파산위험 제외 | `.Q`, `.E`, `.PK` 등 | 공시지연/파산 징후 |
-| 무데이터 제외 | 가격 정보 없음 | 거래 정지 가능성 |
-
----
-
-<<<<<<< HEAD
-## 🎯 9대 투자 테마
-=======
-## 9대 투자 테마
->>>>>>> 7de507c (edit)
-
-| # | 테마 | 핵심 조건 |
-|---|------|-----------|
-| 1 | 🌱 저평가 성장주 | `PEG < 1.0` & 매출성장률 > 15% |
-| 2 | 🚀 성장 기대주 | 매출성장률 > 10% & 영업이익률 > 5% |
-| 3 | 🛡️ 안전 성장주 | 매출성장 & 부채비율 < 50% |
-| 4 | 💎 저렴한 평가주 | `PBR < 1.0` |
-| 5 | 📈 고수익 저평가 | `ROE > 15%` & `PER < 15` |
-| 6 | ⚡ 저평가 탈출 | MA50 > MA200 (정배열) & 주가 > MA200 |
-| 7 | 🏎️ 부가티주 | 영업이익률 > 30% |
-| 8 | 💰 배당주 | 배당수익률 > 4% |
-| 9 | 👑 미래왕 배당주 | 배당귀족 (10년+ 연속 증배) |
-
----
-
-<<<<<<< HEAD
-## 🚀 Vercel 배포 가이드
-=======
-## Vercel 배포 가이드
->>>>>>> 7de507c (edit)
-
-### 1단계: 저장소 준비
+## 로컬 실행
 
 ```bash
-git init
-git add .
-git commit -m "feat: initial QuantScreen setup"
-gh repo create quantscreen --public --push
-```
-
-### 2단계: Vercel 프로젝트 생성
-
-```bash
-npm i -g vercel
-vercel login
-vercel
-```
-
-### 3단계: 환경변수 설정
-
-Vercel 대시보드 → Settings → Environment Variables:
-
-```
-DATABASE_URL       = postgresql://...  (Vercel Postgres 권장)
-REDIS_URL          = redis://...       (Upstash Redis 권장)
-NEXT_PUBLIC_API_URL = /api
-```
-
-또는 CLI로:
-```bash
-vercel env add DATABASE_URL
-vercel env add REDIS_URL
-vercel env add NEXT_PUBLIC_API_URL
-```
-
-### 4단계: 데이터베이스 초기화
-
-```bash
-# 로컬에서 Vercel DB 연결 후 실행
-vercel env pull .env.local
-python scripts/init_db.py
-```
-
-### 5단계: 첫 데이터 수집
-
-```bash
-python scripts/refresh_data.py
-```
-
-### 6단계: 배포
-
-```bash
-vercel --prod
-```
-
----
-
-## 💻 로컬 개발
-
-```bash
-# 자동 세팅
+# 자동 세팅 (권장)
 bash scripts/dev.sh
+```
 
-# 또는 수동으로:
-# 1. Python 가상환경
+수동 실행:
+
+```bash
+# 1. Python 가상환경 및 의존성 설치
 python3.11 -m venv venv && source venv/bin/activate
 pip install -r api/requirements.txt
 
-# 2. FastAPI 백엔드
+# 2. FastAPI 백엔드 실행
 uvicorn backend.main:app --reload --port 8000
 
-# 3. Next.js 프론트엔드 (새 터미널)
-npm install
-npm run dev
+# 3. Next.js 프론트엔드 실행 (새 터미널)
+npm install && npm run dev
 ```
 
-- 프론트엔드: http://localhost:3000
-- API 문서: http://localhost:8000/api/docs
+| 서비스 | 주소 |
+|--------|------|
+| 프론트엔드 | http://localhost:3000 |
+| API 문서 (Swagger) | http://localhost:8000/api/docs |
+
+**환경변수 설정** (`.env.example` 참고)
+
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/quantscreen
+REDIS_URL=redis://localhost:6379
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
 ---
 
-## 🔌 API 엔드포인트
+## API 엔드포인트
 
 | Method | Path | 설명 |
 |--------|------|------|
@@ -211,39 +241,48 @@ npm run dev
 | `GET` | `/api/health` | 헬스체크 |
 | `GET` | `/api/docs` | Swagger UI |
 
-### 테마 키 목록
+**테마 키**
+
 ```
-undervalued_growth | growth_momentum | safe_growth | deep_value
-high_roe | breakout | bugatti | dividend | dividend_aristocrat
+undervalued_growth  growth_momentum  safe_growth   deep_value
+high_roe            breakout         bugatti       dividend   dividend_aristocrat
 ```
 
 ---
 
-## 🛠 기술 스택
+## 배포 (Vercel)
 
-| 구분 | 기술 |
-|------|------|
-| Frontend | Next.js 14 (App Router), TypeScript |
-| Styling | Tailwind CSS, Framer Motion |
-| State | Zustand, React Query (TanStack) |
-| Charts | Recharts |
-| Backend | FastAPI (Python 3.11+) |
-| Data | yfinance, Pandas, NumPy |
-| Database | PostgreSQL (SQLAlchemy) |
-| Cache | Redis / In-memory fallback |
-| Scheduler | APScheduler |
-| Deploy | Vercel (Next.js + Python Serverless) |
+```bash
+# 1. 저장소 생성 및 푸시
+gh repo create quantscreen --public --push
+
+# 2. Vercel 배포
+npm i -g vercel && vercel login && vercel
+
+# 3. 환경변수 등록
+vercel env add DATABASE_URL    # Vercel Postgres 권장
+vercel env add REDIS_URL       # Upstash Redis 권장
+vercel env add NEXT_PUBLIC_API_URL
+
+# 4. DB 초기화 및 초기 데이터 수집
+vercel env pull .env.local
+python scripts/init_db.py
+python scripts/refresh_data.py
+
+# 5. 프로덕션 배포
+vercel --prod
+```
 
 ---
 
-## ⚠️ 주의사항
+## 주의사항
 
-- **투자 참고용** 데이터입니다. 투자 손익의 책임은 본인에게 있습니다.
-- yfinance는 비공식 API입니다. 프로덕션에서는 유료 데이터 제공업체(Polygon.io, Alpha Vantage 등) 연동을 권장합니다.
-- Vercel Serverless 함수는 60초 타임아웃이 있어 대량 데이터 수집은 별도 백그라운드 서버 또는 GitHub Actions로 처리하는 것을 권장합니다.
+- 본 프로젝트는 **학습 및 포트폴리오 목적**으로 제작되었습니다. 투자 손익의 책임은 본인에게 있습니다.
+- yfinance는 Yahoo Finance 비공식 API입니다. 상업적 사용 시 Polygon.io, Alpha Vantage 등 공식 데이터 제공업체 연동을 권장합니다.
+- Vercel Serverless 함수는 60초 타임아웃이 있어 대량 배치 수집은 GitHub Actions 또는 별도 서버로 처리하는 것을 권장합니다.
 
 ---
 
-## 📄 라이선스
+## 라이선스
 
-MIT License
+[MIT License](LICENSE)

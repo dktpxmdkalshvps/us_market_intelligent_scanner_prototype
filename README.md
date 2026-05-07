@@ -32,7 +32,7 @@ QuantScreen은 PER, PEG, ROE, 배당수익률 등 퀀트 지표를 조합한 **9
 <img width="1596" height="766" alt="image" src="https://github.com/user-attachments/assets/f422d7ce-c54c-4bbc-9aaf-f2c8ce05b9fa" />
 
 **시장 지수 & 실시간 티커**
-<img width="1596" height="766" alt="image" src="https://github.com/user-attachments/assets/69dce846-52f8-45b7-b817-43a48872d472" />
+<img width="1889" height="430" alt="스크린샷 2026-05-04 232814" src="https://github.com/user-attachments/assets/6242f3fd-f2db-4e1d-bcd1-42d02b875263" />
 
 **증시 캘린더**
 <img width="410" height="858" alt="스크린샷 2026-05-04 232826" src="https://github.com/user-attachments/assets/f63812ee-94e4-4e2a-b34b-4cc0a70eb10b" /> <img width="403" height="770" alt="스크린샷 2026-05-04 232835" src="https://github.com/user-attachments/assets/287e13a1-d69c-404c-a4bb-56c7ee47d3af" />

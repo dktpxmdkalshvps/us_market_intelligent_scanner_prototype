@@ -37,8 +37,8 @@ class Settings(BaseSettings):
     RISK_MIN_MARKET_CAP: float = 50_000_000
     RISK_EXCLUDE_SUFFIXES: List[str] = [".Q", ".E", ".PK", ".OB"]
 
-    # ── 데이터 수집 범위 (로컬 개발 시 50개로 제한 → 빠른 테스트) ─────────────
-    UNIVERSE_LIMIT: int = 50  # 0 = 전체 유니버스
+    # ── 데이터 수집 범위 (0 = 전체, 양수 = 상위 N개) ──────────────────────────
+    UNIVERSE_LIMIT: int = 200
 
     class Config:
         env_file = ".env"

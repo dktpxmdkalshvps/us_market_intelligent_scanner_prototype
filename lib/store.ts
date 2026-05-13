@@ -1,6 +1,16 @@
 import { create } from "zustand";
 import type { ThemeKey, SortField, SortDirection } from "./types";
 
+interface SearchStore {
+  searchTicker: string | null;
+  setSearchTicker: (ticker: string | null) => void;
+}
+
+export const useSearchStore = create<SearchStore>((set) => ({
+  searchTicker: null,
+  setSearchTicker: (ticker) => set({ searchTicker: ticker ? ticker.trim().toUpperCase() : null }),
+}));
+
 interface ThemeStore {
   activeTheme: ThemeKey;
   setActiveTheme: (theme: ThemeKey) => void;

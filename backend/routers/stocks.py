@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 @router.get("/{ticker}", response_model=ApiResponseSchema)
 async def get_stock_detail(
     ticker: str,
-    period: str = Query("1y", regex="^(1mo|3mo|6mo|1y|2y|5y)$"),
+    period: str = Query("1y", pattern="^(1mo|3mo|6mo|1y|2y|5y)$"),
 ):
     ticker = ticker.upper()
     cache_key = f"stock:{ticker}:{period}"

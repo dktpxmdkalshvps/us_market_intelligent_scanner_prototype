@@ -20,10 +20,29 @@ logger = logging.getLogger(__name__)
 
 # ── Universe Lists ──────────────────────────────────────────────────────────
 
+_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
+
+def _read_html_wiki(url: str) -> list:
+    """Wikipedia HTML을 User-Agent 헤더와 함께 요청 후 pd.read_html로 파싱"""
+    import requests
+    from io import StringIO
+    resp = requests.get(url, headers=_HEADERS, timeout=15)
+    resp.raise_for_status()
+    return pd.read_html(StringIO(resp.text))
+
+
 @lru_cache(maxsize=1)
 def get_sp500_tickers() -> list[str]:
     try:
-        tables = pd.read_html(
+        tables = _read_html_wiki(
             "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
         )
         df = tables[0]
@@ -38,12 +57,13 @@ def get_sp500_tickers() -> list[str]:
 @lru_cache(maxsize=1)
 def get_nasdaq100_tickers() -> list[str]:
     try:
-        tables = pd.read_html("https://en.wikipedia.org/wiki/Nasdaq-100")
+        tables = _read_html_wiki("https://en.wikipedia.org/wiki/Nasdaq-100")
         for df in tables:
-            cols = [c.lower() for c in df.columns]
-            if "ticker" in cols or "symbol" in cols:
-                col = "Ticker" if "Ticker" in df.columns else "Symbol"
-                tickers = df[col].str.replace(".", "-", regex=False).tolist()
+            # 컬럼이 문자열인 경우만 소문자 비교
+            str_cols = {str(c).lower(): c for c in df.columns}
+            ticker_col = str_cols.get("ticker") or str_cols.get("symbol")
+            if ticker_col is not None:
+                tickers = df[ticker_col].astype(str).str.replace(".", "-", regex=False).tolist()
                 logger.info(f"NASDAQ 100 티커 {len(tickers)}개 수신")
                 return tickers
     except Exception as e:
@@ -210,8 +230,8 @@ def fetch_quarterly_financials(ticker: str) -> dict:
 
 # ── Bulk Fetch ──────────────────────────────────────────────────────────────
 
-async def bulk_fetch_universe(tickers: list[str], chunk_size: int = 20) -> list[dict]:
-    """비동기 청크 단위 bulk fetch"""
+async def bulk_fetch_universe(tickers: list[str], chunk_size: int = 10) -> list[dict]:
+    """비동기 청크 단위 bulk fetch (청크 사이 딜레이로 rate limit 방지)"""
     results = []
     for i in range(0, len(tickers), chunk_size):
         chunk = tickers[i: i + chunk_size]
@@ -223,6 +243,8 @@ async def bulk_fetch_universe(tickers: list[str], chunk_size: int = 20) -> list[
             logger.info(f"  청크 {i+1}~{i+len(chunk)}: {len(data)}개 수신")
         except Exception as e:
             logger.error(f"청크 {i}-{i+chunk_size} 실패: {e}")
+        if i + chunk_size < len(tickers):
+            await asyncio.sleep(1.0)
     return results
 
 

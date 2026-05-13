@@ -133,6 +133,65 @@ export interface ApiResponse<T> {
   timestamp: string;
 }
 
+// ── Technical Analysis & Forecast Types ─────────────────────────────────────
+
+export interface IndicatorPoint {
+  date: string;
+  close: number;
+  volume: number;
+  ma5?: number | null;
+  ma20?: number | null;
+  ma60?: number | null;
+  bb_upper?: number | null;
+  bb_lower?: number | null;
+  bb_mid?: number | null;
+  rsi?: number | null;
+  macd?: number | null;
+  macd_signal?: number | null;
+  macd_hist?: number | null;
+}
+
+export interface SignalDetail {
+  signal: "buy" | "sell" | "hold";
+  description: string;
+}
+
+export interface TradingSignal {
+  overall: "buy" | "sell" | "hold";
+  buy_count: number;
+  sell_count: number;
+  details: SignalDetail[];
+}
+
+export interface TechnicalAnalysis {
+  ticker: string;
+  period: string;
+  data: IndicatorPoint[];
+  signal: TradingSignal;
+  lastUpdated: string;
+}
+
+export interface ForecastPoint {
+  date: string;
+  yhat: number;
+  yhat_lower?: number | null;
+  yhat_upper?: number | null;
+}
+
+export interface ForecastModel {
+  ticker: string;
+  model: string;
+  forecast: ForecastPoint[];
+  error?: string;
+}
+
+export interface ForecastData {
+  lastPrice: number;
+  lastDate: string;
+  prophet?: ForecastModel;
+  arima?: ForecastModel;
+}
+
 // ── Sort / Filter State ─────────────────────────────────────────────────────
 
 export type SortField =

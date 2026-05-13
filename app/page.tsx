@@ -6,11 +6,14 @@ import { ThemeSelector } from "@/components/ThemeSelector";
 import { StockTable } from "@/components/StockTable";
 import { MarketCalendar } from "@/components/MarketCalendar";
 import { MarketOverview } from "@/components/MarketOverview";
-import { useThemeStore } from "@/lib/store";
+import { TickerSearchBar } from "@/components/TickerSearchBar";
+import { StockDetailModal } from "@/components/StockDetailModal";
+import { useThemeStore, useSearchStore } from "@/lib/store";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function DashboardPage() {
   const { activeTheme } = useThemeStore();
+  const { searchTicker, setSearchTicker } = useSearchStore();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -20,8 +23,8 @@ export default function DashboardPage() {
       </Suspense>
 
       {/* ── Header ── */}
-      <header className="border-b border-[hsl(var(--border))] px-4 md:px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <header className="border-b border-[hsl(var(--border))] px-4 md:px-8 py-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 shrink-0">
           <div className="w-7 h-7 rounded bg-bull flex items-center justify-center">
             <span className="text-[hsl(var(--background))] text-xs font-bold font-display">Q</span>
           </div>
@@ -32,7 +35,11 @@ export default function DashboardPage() {
             BETA
           </span>
         </div>
-        <div className="flex items-center gap-4">
+
+        {/* 검색창 */}
+        <TickerSearchBar />
+
+        <div className="flex items-center gap-4 shrink-0">
           <span className="text-xs text-muted-foreground font-mono hidden sm:block">
             Last updated: {new Date().toLocaleString("ko-KR", { timeZone: "America/New_York" })} ET
           </span>
@@ -70,6 +77,14 @@ export default function DashboardPage() {
         <span>QuantScreen © 2025 · 투자 참고용 데이터, 투자 손익의 책임은 본인에게 있습니다.</span>
         <span className="hidden sm:block">Data: Yahoo Finance · yfinance</span>
       </footer>
+
+      {/* 직접 검색 모달 */}
+      {searchTicker && (
+        <StockDetailModal
+          ticker={searchTicker}
+          onClose={() => setSearchTicker(null)}
+        />
+      )}
     </div>
   );
 }

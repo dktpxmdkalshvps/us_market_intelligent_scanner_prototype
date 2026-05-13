@@ -2,13 +2,8 @@
 Themes Router – /api/theme/{theme_key}
 """
 import logging
-<<<<<<< HEAD
-from datetime import datetime
-=======
 import math
 from datetime import datetime
-from typing import Optional
->>>>>>> 7de507c (edit)
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 
@@ -17,11 +12,7 @@ from ..core.config import settings
 from ..services.fetcher import get_full_universe, bulk_fetch_universe
 from ..services.filters import filter_universe
 from ..services.theme_engines import run_theme, THEME_ENGINES
-<<<<<<< HEAD
-from ..models.schemas import ThemeResponseSchema, ApiResponseSchema
-=======
 from ..models.schemas import StockSchema, ThemeResponseSchema, ApiResponseSchema
->>>>>>> 7de507c (edit)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -29,10 +20,7 @@ logger = logging.getLogger(__name__)
 VALID_THEMES = set(THEME_ENGINES.keys())
 
 
-<<<<<<< HEAD
-=======
 def _nan_to_none(val):
-    """Convert NaN/inf floats to None for JSON-safe serialization."""
     if val is None:
         return None
     try:
@@ -44,7 +32,6 @@ def _nan_to_none(val):
 
 
 def _map_to_stock_schema(d: dict) -> StockSchema:
-    """Map a raw fetcher dict (snake_case) to StockSchema (camelCase)."""
     return StockSchema(
         ticker=d.get("ticker", ""),
         name=d.get("name", ""),
@@ -75,7 +62,6 @@ def _map_to_stock_schema(d: dict) -> StockSchema:
     )
 
 
->>>>>>> 7de507c (edit)
 @router.get("/{theme_key}", response_model=ApiResponseSchema)
 async def get_theme_stocks(
     theme_key: str,
@@ -94,38 +80,28 @@ async def get_theme_stocks(
 
     cache_key = f"theme:{theme_key}"
 
-    # Try cache first
     if not force_refresh:
         cached = await cache.get(cache_key)
         if cached:
             return ApiResponseSchema(data=cached, cached=True)
 
-    # Cache miss – compute synchronously (first request or forced refresh)
     try:
         universe = get_full_universe()
-        raw_stocks = await bulk_fetch_universe(universe[:200])  # limit for serverless
+        raw_stocks = await bulk_fetch_universe(universe[:200])
         filtered, original_count = filter_universe(raw_stocks)
         themed = run_theme(theme_key, filtered)
 
-<<<<<<< HEAD
-        payload = ThemeResponseSchema(
-            theme=theme_key,
-            stocks=themed,
-            totalCount=len(themed),
-=======
         stock_schemas = [_map_to_stock_schema(s) for s in themed]
 
         payload = ThemeResponseSchema(
             theme=theme_key,
             stocks=stock_schemas,
             totalCount=len(stock_schemas),
->>>>>>> 7de507c (edit)
             filteredCount=original_count,
             lastUpdated=datetime.utcnow().isoformat(),
         )
 
         await cache.set(cache_key, payload.model_dump(), ttl=settings.CACHE_TTL_THEME)
-
         return ApiResponseSchema(data=payload.model_dump(), cached=False)
 
     except Exception as e:

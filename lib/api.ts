@@ -6,6 +6,8 @@ import type {
   MarketBannerData,
   MarketCalendarEvent,
   StockDetail,
+  TechnicalAnalysis,
+  ForecastData,
 } from "./types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
@@ -57,6 +59,29 @@ export async function fetchStockDetail(
 ): Promise<StockDetail> {
   const { data } = await apiClient.get<ApiResponse<StockDetail>>(
     `/stocks/${ticker}?period=${period}`
+  );
+  return data.data;
+}
+
+// ── Analysis API ────────────────────────────────────────────────────────────
+
+export async function fetchTechnicalAnalysis(
+  ticker: string,
+  period: string = "6mo"
+): Promise<TechnicalAnalysis> {
+  const { data } = await apiClient.get<ApiResponse<TechnicalAnalysis>>(
+    `/analysis/${ticker}/technical?period=${period}`
+  );
+  return data.data;
+}
+
+export async function fetchForecast(
+  ticker: string,
+  model: "prophet" | "arima" | "both" = "both",
+  days: number = 7
+): Promise<ForecastData> {
+  const { data } = await apiClient.get<ApiResponse<ForecastData>>(
+    `/analysis/${ticker}/forecast?model=${model}&days=${days}`
   );
   return data.data;
 }

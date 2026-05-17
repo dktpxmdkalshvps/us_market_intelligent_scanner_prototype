@@ -118,3 +118,27 @@ refresh_runs
 - finished_at
 - created_at
 ```
+
+## Migration Lifecycle
+
+```text
+Git commit with Alembic revision
+  ↓
+Render deploy starts backend service
+  ↓
+backend/start.sh executes alembic upgrade head
+  ↓
+FastAPI app starts only after schema is current
+  ↓
+Smoke tests verify /health and frontend-compatible APIs
+```
+
+Render Free 환경에서는 운영 서버에 직접 Shell로 접속할 수 없기 때문에, 마이그레이션은 `start.sh`의 부팅 전 자동 실행과 Codespaces/Local 원격 실행을 조합합니다. 이 구조는 제출용 포트폴리오에서는 충분히 단순하면서도, DB 스키마 변경을 코드 변경과 함께 추적할 수 있게 합니다.
+
+수동 보정이 필요한 경우에는 Render PostgreSQL의 External Database URL을 사용합니다.
+
+```bash
+cd backend
+export DATABASE_URL='<Render PostgreSQL External Database URL>'
+PYTHONPATH=. alembic upgrade head
+```

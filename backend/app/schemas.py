@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Generic, Literal, TypeVar
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -86,3 +86,26 @@ class HealthOut(BaseModel):
     service: str
     database: str
     app_env: str
+
+
+T = TypeVar('T')
+
+
+class ApiResponse(BaseModel, Generic[T]):
+    """Common API response wrapper used by frontend-compatible endpoints."""
+
+    data: T
+    status: Literal['ok', 'error'] = 'ok'
+    message: str | None = None
+    cached: bool = False
+    timestamp: str
+
+
+class MarketCalendarEventContract(BaseModel):
+    """Frontend-visible market calendar event contract."""
+
+    date: date
+    type: Literal['earnings', 'economic', 'holiday', 'fomc']
+    title: str
+    tickers: list[str] | None = None
+    importance: Literal['high', 'medium', 'low']

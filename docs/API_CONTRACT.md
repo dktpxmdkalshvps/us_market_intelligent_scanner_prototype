@@ -2,6 +2,8 @@
 
 프론트엔드(`QS_front`)가 기대하는 백엔드 API 계약입니다. 모든 프론트 호환 API는 동일한 응답 래퍼를 사용합니다.
 
+본 계약은 단순 문서가 아니라 `backend/app/schemas.py`의 `ApiResponse<T>` Generic Pydantic Model과 `backend/app/routers/compat.py`의 `_api_response()`를 통해 공통 래퍼 형태를 런타임에서 검증하는 구조를 갖습니다. 특히 증시 캘린더의 `type`, `importance` 리터럴 값은 `MarketCalendarEventContract`로 검증해 프론트 UI가 모르는 이벤트 타입을 받지 않도록 방어합니다.
+
 ## 공통 응답 래퍼
 
 ```ts
@@ -13,6 +15,20 @@ interface ApiResponse<T> {
   timestamp: string;
 }
 ```
+
+백엔드 구현 힌트:
+
+```py
+# backend/app/schemas.py
+class ApiResponse(BaseModel, Generic[T]):
+    data: T
+    status: Literal['ok', 'error'] = 'ok'
+    message: str | None = None
+    cached: bool = False
+    timestamp: str
+```
+
+`compat.py`의 `_api_response()`는 이 모델을 통해 공통 응답 래퍼를 생성합니다.
 
 예시:
 

@@ -1,5 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 from math import sin
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
@@ -7,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import MarketCalendar, Stock, ThemeSnapshot
+from app.schemas import ApiResponse, MarketCalendarEventContract
 
 router = APIRouter(tags=['frontend-compat'])
 
@@ -36,12 +38,12 @@ def _now_iso() -> str:
 
 
 def _api_response(payload: dict | list) -> dict:
-    return {
-        'data': payload,
-        'status': 'ok',
-        'cached': False,
-        'timestamp': _now_iso(),
-    }
+    return ApiResponse[Any](
+        data=payload,
+        status='ok',
+        cached=False,
+        timestamp=_now_iso(),
+    ).model_dump()
 
 
 def _base_price(symbol: str, idx: int = 0) -> float:
@@ -234,7 +236,12 @@ def market_calendar(days: int = Query(default=10, ge=1, le=60), db: Session = De
         i += 1
 
     events.sort(key=lambda event: event['date'])
-    return _api_response(events[:days])
+    validated_events = [
+        MarketCalendarEventContract(**event).model_dump(mode='json')
+        for event in events[:days]
+    ]
+    return _api_response(validated_events)
+
 
 @router.get('/theme/{theme_key}')
 def theme(theme_key: str, db: Session = Depends(get_db)) -> dict:

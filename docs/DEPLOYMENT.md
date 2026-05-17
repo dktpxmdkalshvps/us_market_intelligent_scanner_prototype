@@ -73,6 +73,46 @@ GET https://quant-backend-e82y.onrender.com/analysis/NVDA/technical?period=1y
 GET https://quant-backend-e82y.onrender.com/analysis/NVDA/forecast?model=both&days=7
 ```
 
+## Alembic 마이그레이션 운영 전략
+
+Render Free Web Service는 내부 Shell Access를 지원하지 않으므로, 스키마 마이그레이션은 두 단계로 운영합니다.
+
+### 1. 배포 시작 시 자동 마이그레이션
+
+`backend/start.sh`는 애플리케이션 기동 전에 아래 명령을 실행하도록 구성되어 있습니다.
+
+```bash
+alembic upgrade head
+```
+
+따라서 일반적인 배포에서는 Render Web Service가 시작될 때 최신 Alembic revision이 자동 적용됩니다. 이 방식은 Free 플랜에서도 동작하며, 별도 SSH 접속이 필요하지 않습니다.
+
+### 2. 수동 보정 또는 Seed 적재
+
+Render Shell을 사용할 수 없는 Free 환경에서는 Codespaces 또는 로컬 가상환경에서 Render PostgreSQL의 **External Database URL**을 주입해 원격으로 실행합니다.
+
+```bash
+cd backend
+export APP_ENV=local
+export DATABASE_URL='<Render PostgreSQL External Database URL>'
+PYTHONPATH=. alembic upgrade head
+PYTHONPATH=. python scripts/seed.py
+```
+
+### 3. 마이그레이션 트리 동기화 방어
+
+포트폴리오 모노레포는 실제 배포 레포의 최신 `backend/alembic/versions/`를 스냅샷으로 반영합니다. `scripts/sync_from_split_repos.sh`는 `rsync --delete`를 사용해 대상 디렉토리를 clean sync하므로, 과거 마이그레이션 파편이 남아 트리가 꼬이는 상황을 줄입니다.
+
+배포 전 점검:
+
+```bash
+cd backend
+PYTHONPATH=. alembic heads
+PYTHONPATH=. alembic current
+```
+
+운영 기준은 항상 `alembic heads`가 단일 head를 가리키는 것입니다.
+
 ## Seed 실행
 
 Render Free 인스턴스는 Shell Access를 지원하지 않으므로 Codespaces 또는 로컬에서 Render PostgreSQL External Database URL을 사용합니다.

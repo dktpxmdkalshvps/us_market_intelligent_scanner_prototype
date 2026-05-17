@@ -19,3 +19,21 @@ They are kept here so reviewers can inspect the complete deployment configuratio
 ## Why not switch immediately
 
 The deployed service is already stable. Re-pointing both Vercel and Render to a new monorepo shortly before submission can introduce avoidable risk. The safer operational choice is to keep runtime deployment stable and use this monorepo as the canonical portfolio review surface.
+
+
+## Migration and seed strategy on Render Free
+
+Render Free Web Service does not provide interactive Shell Access. QuantScreen handles migrations without relying on a paid shell in two ways:
+
+1. `backend/start.sh` runs `alembic upgrade head` before starting Uvicorn/Gunicorn, so schema changes are applied during service boot.
+2. For manual verification or seed data, Codespaces/local environments connect to Render PostgreSQL through the External Database URL and run:
+
+```bash
+cd backend
+export APP_ENV=local
+export DATABASE_URL='<Render PostgreSQL External Database URL>'
+PYTHONPATH=. alembic upgrade head
+PYTHONPATH=. python scripts/seed.py
+```
+
+The monorepo sync script uses clean directory sync semantics so old Alembic version files from previous snapshots do not remain in `backend/alembic/versions/`.
